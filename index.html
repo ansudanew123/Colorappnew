@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 Magic Coloring Book - PNG/JPG + Animations + Delayed Modal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+    <style>
+        /* ========== ALL ORIGINAL STYLES + NEW RIPPLE ANIMATION ========== */
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --purple: #9D4EDD;
+            --dark: #2C3E50;
+            --light: #F7F9FC;
+            --glass: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+        }
+        * { box-sizing: border-box; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        body { font-family: 'Quicksand', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 20%, #f093fb 40%, #f5576c 60%, #4facfe 80%, #00f2fe 100%); background-size: 400% 400%; anim[...]
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        header { padding: 6px 15px; display: flex; flex-direction: column; align-items: center; background: linear-gradient(135deg, #7B2FFF 0%, #FF6B6B 50%, #FFD93D 100%); border-bottom: 3px solid rgb[...]
+        .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1400px; }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo-icon { font-size: 2.2rem; animation: bounce 1.5s infinite; }
+        @keyframes bounce { 0%,100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-6px) rotate(5deg); } }
+        .logo-text { display: flex; flex-direction: column; }
+        h1 { font-family: 'Fredoka One', cursive; font-size: 1.6rem; margin: 0; color: #ffffff; text-shadow: 0 2px 8px rgba(0,0,0,0.35); }
+        @keyframes shineText { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
+        .tagline { font-family: 'Baloo 2', cursive; font-size: 0.8rem; color: rgba(255,255,255,0.9); text-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+        .header-actions { display: flex; gap: 6px; align-items: center; }
+        .sound-toggle { filter: brightness(0) invert(1); background: white; border: none; width: 40px; height: 40px; border-radius: 12px; font-size: 1.2rem; cursor: pointer; box-shadow: 0 3px 10px rgb[...]
+        .sound-toggle:hover { transform: scale(1.1); }
+        .sound-toggle.muted { opacity: 0.5; }
+        .app-container { display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto 1fr auto; gap: 6px; padding: 6px; flex: 1; min-height: 0; overflow: hidden; max-width: 1400px; width: [...]
+        .panel { background: var(--glass); backdrop-filter: blur(15px); border-radius: 18px; border: 2px solid var(--glass-border); box-shadow: var(--shadow); padding: 8px; }
+        .colors-panel { grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 5px; padding: 5px 12px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+        .colors-panel::-webkit-scrollbar { display: none; }
+        .palette-label { font-family: 'Fredoka One', cursive; font-size: 0.85rem; color: var(--dark); white-space: nowrap; margin-right: 5px; }
+        /* Tools panel: horizontal strip across top */
+        .tools-panel { grid-column: 1; grid-row: 2; display: flex; flex-direction: row; align-items: center; gap: 6px; padding: 5px 10px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; f[...]
+        .tools-panel::-webkit-scrollbar { display: none; }
+        .tool-section { display: flex; flex-direction: row; align-items: center; gap: 5px; flex-shrink: 0; }
+        .tool-section-label { font-family: 'Fredoka One', cursive; font-size: 0.6rem; color: var(--dark); opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; writing-mode: vertical-rl; tra[...]
+        .btn-caption { font-family: 'Fredoka One', cursive; font-size: 0.5rem; color: inherit; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1; pointer-events: none; }
+        .btn.active .btn-caption { color: white; }
+        .canvas-area { grid-column: 1; grid-row: 3; background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%); border-radius: 18px; box-shadow: inset 0 3px 15px rgba(0,0,0,0.06), 0 12px 45px rgba([...]
+        .canvas-container { width: 100%; height: 100%; position: relative; }
+        .svg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .svg-layer svg { width: 100%; height: 100%; display: block; }
+        .drawing-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; }
+        .mask-canvas { display: none; }
+        /* ===== FULLSCREEN + ZOOM ===== */
+        #fullscreenBtn { position: fixed; bottom: 80px; right: 14px; z-index: 200; width: 44px; height: 44px; border-radius: 50%; background: var(--glass); border: 2px solid var(--glass-border); font-[...]
+        #zoomControls { position: fixed; bottom: 130px; right: 14px; z-index: 200; display:flex; flex-direction:column; gap:6px; align-items:center; }
+        #zoomSliderWrap { display:flex; flex-direction:column; align-items:center; gap:2px; background:var(--glass); border:2px solid var(--glass-border); border-radius:12px; padding:6px 4px; backdrop[...]
+        #zoomSlider { -webkit-appearance:slider-vertical; appearance:slider-vertical; width:28px; height:100px; cursor:pointer; accent-color: #7B2FFF; }
+        #zoomLabel { font-family:'Fredoka One',cursive; font-size:0.65rem; color:var(--dark); }
+        .zoom-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--glass); border: 2px solid var(--glass-border); font-size: 1.3rem; cursor: pointer; box-shadow: var(--shadow); backd[...]
+        /* canvas-container becomes transformable */
+        .canvas-container { transform-origin: center center; cursor: grab; }
+        .canvas-container.panning { cursor: grabbing; }
+        /* Divider: vertical between tool sections */
+        /* Mobile: same horizontal layout, just smaller */
+        @media (max-width: 600px) {
+            .app-container { gap: 4px; padding: 4px; }
+            .colors-panel { padding: 4px 8px; }
+            .palette-label { display: none; }
+            .tools-panel { gap: 4px; padding: 4px 8px; }
+            .btn { min-width: 36px; height: 36px; font-size: 1rem; }
+            .btn-small { min-width: 30px; height: 30px; }
+            .brush-btn { min-width: 34px; height: 34px; font-size: 1rem; }
+            .btn-text span { display: none; }
+            .current-sticker { width: 36px; height: 36px; font-size: 1.2rem; }
+            .gallery-tab { padding: 4px 8px; font-size: 0.6rem; }
+            .template-thumb { width: 48px; height: 48px; min-width: 48px; }
+            .color-btn { width: 26px; height: 26px; min-width: 26px; }
+            .sticker-grid { grid-template-columns: repeat(7, 1fr); }
+            .sticker-item { width: 34px; height: 34px; font-size: 1.2rem; }
+            .celebration-character { font-size: 3.5rem; }
+            .celebration-title { font-size: 1.4rem; }
+            .celebration-message { font-size: 0.95rem; }
+        }
+
+        .canvas-area.bucket-mode .drawing-canvas { pointer-events: auto; }
+        .canvas-area.brush-mode .drawing-canvas { pointer-events: auto; }
+        .canvas-area.bucket-mode .svg-layer { cursor: pointer; }
+        .canvas-area.brush-mode.brush-crayon .drawing-canvas { cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text y="18" font-size[...]
+        .canvas-area.brush-mode.brush-pencil .drawing-canvas { cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text y="18" font-size[...]
+        .canvas-area.brush-mode.brush-marker .drawing-canvas { cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text y="18" font-size[...]
+        .canvas-area.brush-mode.brush-spray .drawing-canvas { cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text y="18" font-size=[...]
+        .canvas-area.brush-mode.brush-glitter .drawing-canvas { cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text y="18" font-siz[...]
+        .gallery-panel { grid-column: 1; grid-row: 4; padding: 5px 10px; flex-shrink: 0; }
+        .gallery-tabs { display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+        .gallery-tabs::-webkit-scrollbar { display: none; }
+        .gallery-tab { padding: 6px 14px; background: white; border: 2px solid transparent; border-radius: 20px; font-family: 'Fredoka One', cursive; font-size: 0.75rem; cursor: pointer; white-space: [...]
+        .gallery-tab:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .gallery-tab.active { background: linear-gradient(135deg, var(--primary), #FF8E72); color: white; border-color: transparent; }
+        .gallery-content { display: flex; gap: 10px; overflow-x: auto; padding: 5px 0; scrollbar-width: none; }
+        .gallery-content::-webkit-scrollbar { display: none; }
+        .btn { min-width: 48px; height: 54px; border: none; border-radius: 12px; background: white; font-size: 1.1rem; cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); d[...]
+        .btn:hover { transform: scale(1.1) translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.18); }
+        .btn:active { transform: scale(0.95); }
+        .btn.active { background: linear-gradient(135deg, var(--secondary), #45B7D1); color: white; box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.4), 0 6px 18px rgba(78, 205, 196, 0.4); }
+        .btn-small { min-width: 38px; height: 38px; font-size: 1rem; border-radius: 10px; }
+        .btn-text { padding: 0 14px; font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: 0.8rem; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), #FF8E72); color: white; }
+        .btn-magic { background: linear-gradient(135deg, var(--purple), #C77DFF); color: white; }
+        .brush-btn { min-width: 42px; height: 42px; font-size: 1.3rem; position: relative; }
+        .brush-btn::after { content: attr(data-name); position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); font-size: 0.5rem; font-family: 'Quicksand', sans-serif; font-weight: 7[...]
+        .color-btn { width: 34px; height: 34px; min-width: 34px; border-radius: 50%; border: 3px solid white; cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow:[...]
+        .color-btn:hover { transform: scale(1.3); z-index: 10; }
+        .color-btn.active { transform: scale(1.35); border: 3px solid var(--dark); box-shadow: 0 0 0 4px rgba(255,255,255,0.95), 0 6px 20px rgba(0,0,0,0.25); }
+        .template-thumb { width: 60px; height: 60px; min-width: 60px; background: white; border-radius: 10px; padding: 5px; cursor: pointer; transition: all 0.3s ease; border: 3px solid transparent; b[...]
+        .template-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .template-thumb svg { width: 100%; height: 100%; }
+        .template-thumb:hover { transform: translateY(-4px) scale(1.08); box-shadow: 0 10px 25px rgba(0,0,0,0.18); }
+        .template-thumb.active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.4); }
+        .template-thumb.locked { position: relative; opacity: 0.72; filter: saturate(0.45); }
+        .template-thumb.locked::after { content: '🔒'; position: absolute; inset: auto 4px 4px auto; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, var(--purple),[...]
+        .fillable { transition: fill 0.25s ease; cursor: pointer; }
+        .canvas-area.bucket-mode .fillable { cursor: inherit; }
+        .fillable:hover { filter: brightness(0.93); }
+        .size-control { display: none; flex-direction: row; align-items: center; gap: 5px; padding: 4px 8px; background: rgba(255,255,255,0.7); border-radius: 8px; }
+        .size-control.visible { display: flex; }
+        .size-control label { font-size: 0.6rem; font-weight: 700; color: var(--dark); white-space: nowrap; }
+        .size-control input[type="range"] { width: 70px; cursor: pointer; }
+        .divider { width: 2px; height: 32px; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.14), transparent); margin: 0 3px; flex-shrink: 0; }
+        .current-sticker { font-size: 1.6rem; background: white; width: 46px; height: 46px; border-radius: 12px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 12px rgb[...]
+        .current-sticker:hover { transform: scale(1.1); }
+        .current-sticker::after { content: '+'; position: absolute; bottom: -4px; right: -4px; background: var(--primary); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 0.9re[...]
+        .progress-container { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: var(--glass); backdrop-filter: blur(10px); padding: 6px 16px; border-radius: 18px; d[...]
+        .progress-label { font-family: 'Fredoka One', cursive; font-size: 0.7rem; color: var(--dark); }
+        .progress-bar { width: 80px; height: 8px; background: rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--secondary), var(--accent), var(--primary)); border-radius: 4px; transition: width 0.3s ease; width: 0%; }
+        .progress-emoji { font-size: 1.1rem; animation: wiggle 1s infinite; }
+        @keyframes wiggle { 0%,100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); } }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .overlay.show { opacity: 1; pointer-events: auto; }
+        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); background: var(--glass); backdrop-filter: blur(20px); border-radius: 25px; padding: 25px; box-shadow:[...]
+        .modal.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        .modal-close { position: absolute; top: 12px; right: 15px; background: var(--primary); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.3rem; cursor: poi[...]
+        .modal-close:hover { transform: rotate(90deg) scale(1.1); }
+        .sticker-picker h3 { font-family: 'Fredoka One', cursive; margin: 0 0 5px; font-size: 1.5rem; text-align: center; background: linear-gradient(135deg, var(--primary), var(--purple), var(--secon[...]
+        .sticker-picker-subtitle { font-size: 0.85rem; color: var(--dark); opacity: 0.7; text-align: center; margin-bottom: 15px; }
+        .sticker-category { margin-bottom: 15px; }
+        .sticker-category-title { font-family: 'Fredoka One', cursive; font-size: 0.9rem; color: var(--dark); margin-bottom: 8px; padding-bottom: 4px; border-bottom: 2px dashed rgba(0,0,0,0.1); }
+        .sticker-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
+        .sticker-item { width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; background: white; border-radius: 8px; cursor: pointer; transition: a[...]
+        .sticker-item:hover { transform: scale(1.2); border-color: var(--secondary); box-shadow: 0 5px 15px rgba(0,0,0,0.15); z-index: 5; }
+        .sticker-item.selected { border-color: var(--primary); background: linear-gradient(135deg, #FFE66D, #FFD93D); }
+        .sticker-item.locked { position: relative; opacity: 0.62; filter: saturate(0.55); }
+        .sticker-item.locked::after { content: '🔒'; position: absolute; right: -4px; bottom: -4px; width: 17px; height: 17px; border-radius: 50%; background: var(--purple); color: white; display: f[...]
+        .pro-modal { text-align: center; max-width: 360px; }
+        .pro-modal h3 { font-family: 'Fredoka One', cursive; margin: 0 0 8px; font-size: 1.5rem; background: linear-gradient(135deg, var(--purple), var(--primary)); -webkit-background-clip: text; -web[...]
+        .pro-modal p { margin: 0 0 16px; color: var(--dark); font-weight: 700; line-height: 1.35; }
+        .pro-modal .pro-badge { width: 58px; height: 58px; border-radius: 18px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, va[...]
+        .upi-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 12px 0; }
+        .upi-option { text-decoration: none; padding: 10px; border-radius: 10px; background: white; color: var(--dark); font-weight: 800; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+        .unlock-row { display: flex; gap: 8px; margin-top: 10px; }
+        .unlock-row input { flex: 1; min-width: 0; border: 2px solid rgba(0,0,0,0.12); border-radius: 10px; padding: 10px; font-weight: 800; }
+        .pro-key { display: none; margin: 10px 0; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.8); color: var(--dark); font-weight: 900; }
+        .pro-key.show { display: block; }
+        .payment-panel { display: none; margin-top: 12px; padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.82); }
+        .payment-panel.show { display: block; }
+        .payment-panel img { width: 210px; height: 210px; max-width: 100%; border-radius: 10px; background: white; padding: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
+        .payment-title { font-weight: 900; color: var(--dark); margin-bottom: 8px; }
+        .payment-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+        .celebration-modal { text-align: center; padding: 35px; }
+        .celebration-character { font-size: 5rem; animation: celebrateCharacter 0.8s ease infinite; display: inline-block; }
+        @keyframes celebrateCharacter { 0%,100% { transform: scale(1) rotate(-5deg); } 50% { transform: scale(1.1) rotate(5deg); } }
+        .celebration-title { font-family: 'Fredoka One', cursive; font-size: 1.8rem; margin: 12px 0 8px; background: linear-gradient(135deg, var(--primary), var(--accent), var(--secondary)); -webkit-b[...]
+        .celebration-message { font-family: 'Baloo 2', cursive; font-size: 1.1rem; color: var(--dark); margin-bottom: 15px; }
+        .celebration-stars { display: flex; justify-content: center; gap: 8px; margin: 12px 0; }
+        .celebration-star { font-size: 1.8rem; animation: starPop 0.5s ease forwards; opacity: 0; }
+        .celebration-star:nth-child(1) { animation-delay: 0.1s; }
+        .celebration-star:nth-child(2) { animation-delay: 0.2s; }
+        .celebration-star:nth-child(3) { animation-delay: 0.3s; }
+        .celebration-star:nth-child(4) { animation-delay: 0.4s; }
+        .celebration-star:nth-child(5) { animation-delay: 0.5s; }
+        @keyframes starPop { 0% { transform: scale(0) rotate(0deg); opacity: 0; } 50% { transform: scale(1.3) rotate(180deg); opacity: 1; } 100% { transform: scale(1) rotate(360deg); opacity: 1; } }
+        .celebration-btn { padding: 12px 30px; font-family: 'Fredoka One', cursive; font-size: 1rem; border: none; border-radius: 25px; cursor: pointer; margin: 4px; transition: all 0.3s; }
+        .celebration-btn-primary { background: linear-gradient(135deg, var(--primary), #FF8E72); color: white; }
+        .celebration-btn-secondary { background: linear-gradient(135deg, var(--secondary), #45B7D1); color: white; }
+        .celebration-btn:hover { transform: scale(1.05); }
+        .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(100px); background: linear-gradient(135deg, var(--secondary), #45B7D1); color: white; padding: 12px 25[...]
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast.celebration { background: linear-gradient(135deg, #FF6B6B, #FFE66D, #4ECDC4, #9D4EDD); background-size: 300% 300%; animation: celebrationBg 1.5s ease infinite; font-size: 1.2rem; }
+        @keyframes celebrationBg { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+        .sparkle { position: fixed; width: 25px; height: 25px; background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,215,0,0.7) 40%, transparent 70%); border-radius: 50%; pointer-events[...]
+        @keyframes sparkleAnim { 0% { transform: translate(-50%, -50%) scale(0); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(4); opacity: 0; } }
+        /* CHARACTER CELEBRATION ANIMATION */
+        @keyframes characterCelebrate {
+            0% { transform: scale(1) rotate(0deg); }
+            40% { transform: scale(1.07) rotate(2deg); }
+            70% { transform: scale(1.03) rotate(-1deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .character-celebrate {
+            animation: characterCelebrate 0.7s ease-in-out 3;
+            transform-origin: center;
+        }
+        /* NEW RIPPLE ANIMATION FOR PNG BUCKET FILLS */
+        .ripple {
+            position: fixed;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: rippleAnim 0.6s ease-out forwards;
+            pointer-events: none;
+            z-index: 10000;
+        }
+        @keyframes rippleAnim {
+            0% { transform: scale(0); opacity: 0.8; }
+            100% { transform: scale(10); opacity: 0; }
+        }
+        @media (max-width: 768px) { h1 { font-size: 1.2rem; } .tagline { font-size: 0.65rem; } .app-container { gap: 5px; padding: 5px; } .colors-panel { padding: 4px 8px; } .palette-label { display: [...]
+    </style>
+</head>
+<body>
+<canvas class="confetti-canvas" id="confettiCanvas"></canvas>
+<div class="overlay" id="overlay"></div>
+<div class="toast" id="toast">Great job! 🎉</div>
+<div class="modal sticker-picker" id="stickerPicker">
+    <button class="modal-close" id="closeStickerPicker">✕</button>
+    <h3>🌟 Sticker Collection 🌟</h3>
+    <p class="sticker-picker-subtitle">Tap any sticker to add it!</p>
+    <div id="stickerCategories"></div>
+</div>
+<div class="modal pro-modal" id="proModal">
+    <button class="modal-close" id="closeProModal">✕</button>
+    <div class="pro-badge">🔒</div>
+    <h3>Unlock with Pro</h3>
+    <p>Scan and pay, then send the screenshot or payment reference by message to get your unlock key.</p>
+    <div class="upi-options">
+        <a class="upi-option" id="upiGpay" href="#" data-pay-app="GPay">GPay</a>
+        <a class="upi-option" id="upiPhonePe" href="#" data-pay-app="PhonePe">PhonePe</a>
+        <a class="upi-option" id="upiPaytm" href="#" data-pay-app="Paytm">Paytm</a>
+        <a class="upi-option" id="upiBhIm" href="#" data-pay-app="BHIM">BHIM</a>
+    </div>
+    <div class="payment-panel" id="paymentPanel">
+        <div class="payment-title" id="paymentTitle">Scan to pay</div>
+        <img id="upiQrImage" alt="UPI payment QR">
+        <div class="payment-actions">
+            <a class="celebration-btn celebration-btn-secondary" id="openUpiApp" href="#">Open UPI App</a>
+            <button class="celebration-btn celebration-btn-primary" id="paymentDoneBtn">I Sent Screenshot</button>
+        </div>
+    </div>
+    <div class="pro-key" id="proKeyBox"><span id="proKeyText"></span></div>
+    <div class="unlock-row">
+        <input id="proKeyInput" type="text" placeholder="Enter key">
+        <button class="celebration-btn celebration-btn-primary" id="proUnlockBtn">Unlock</button>
+    </div>
+</div>
+<div class="modal celebration-modal" id="celebrationModal">
+    <div class="celebration-character" id="celebrationCharacter">🎨</div>
+    <h2 class="celebration-title" id="celebrationTitle">Amazing Work!</h2>
+    <p class="celebration-message" id="celebrationMessage">You created something beautiful!</p>
+    <div class="celebration-stars"><span class="celebration-star">⭐</span><span class="celebration-star">⭐</span><span class="celebration-star">⭐</span><span class="celebration-star">⭐</span><[...]
+    <div><button class="celebration-btn celebration-btn-primary" id="celebrationContinue">Keep Coloring! 🎨</button><button class="celebration-btn celebration-btn-secondary" id="celebrationNew">New [...]
+</div>
+<header>
+    <div class="header-top">
+        <div class="logo"><span class="logo-icon">🎨</span><div class="logo-text"><h1>Magic Coloring Book</h1><span class="tagline">✨ PNG/JPG + Flood Fill + Animations ✨</span></div></div>
+        <div class="header-actions"><button class="sound-toggle" id="soundToggle">🔊</button><button class="btn btn-text btn-magic" id="btnSurprise">🎲 <span>Magic!</span></button><button class="b[...]
+    </div>
+</header>
+<div class="app-container">
+    <div class="panel colors-panel" id="colorPalette"><span class="palette-label">🎨 Colors:</span></div>
+    <aside class="panel tools-panel" id="toolsPanel">
+        <div class="tool-section"><button class="btn active" data-tool="bucket">🪣<span class="btn-caption">Fill</span></button></div>
+        <div class="divider"></div>
+        <div class="tool-section"><button class="btn brush-btn" data-tool="brush" data-brush="crayon" data-name="Crayon">🖍️<span class="btn-caption">Crayon</span></button><button class="btn brush[...]
+        <div class="divider"></div>
+        <div class="tool-section"><div class="current-sticker" id="currentSticker">⭐</div></div>
+        <div class="divider"></div>
+        <div class="tool-section"><button class="btn btn-small" data-tool="eraser">🧽<span class="btn-caption">Erase</span></button><button class="btn btn-small" id="btnUndo">↩️<span class="btn-[...]
+        <div class="size-control" id="sizeControl"><label id="sizeLabel">Size</label><input type="range" id="brushSize" min="3" max="35" value="10"></div>
+    </aside>
+    <div class="canvas-area bucket-mode" id="canvasWrapper">
+        <div class="canvas-container" id="canvasContainer"><div class="svg-layer" id="svgLayer"></div><canvas class="drawing-canvas" id="drawingCanvas"></canvas><canvas class="mask-canvas" id="maskCan[...]
+        <div class="progress-container"><span class="progress-label">Progress:</span><div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div><span class="progress-emoji" id=[...]
+    </div>
+    <div class="panel gallery-panel"><div class="gallery-tabs" id="galleryTabs"></div><div class="gallery-content" id="galleryContent"></div></div>
+</div>
+</body>
+</html>
